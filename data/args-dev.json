@@ -4,15 +4,15 @@
       "host": "127.0.0.1",
       "port": 3306,
       "user": "root",
-      "password": "root",
-      "database": "test"
+      "password": "123456",
+      "database": "e-form"
     }
   },
   "logic": {
     
   },
   "serv": {
-    "name": "nodex-0",
+    "name": "E-FORM",
     "host": "127.0.0.1",
     "port": 8080,
     "cors": true,
