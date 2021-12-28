@@ -19,75 +19,96 @@ exports.helloWorld = async function () {
  * 添加模板
  * @param {String} name 模板名称
  * @param {String} creator_id 创建者id
- * @param {String} json 表单的json格式
+ * @param {String} FcDesignerRuleJson 表单的json格式
+ * @param {String} FcDesignerOptionsJson 表单的json格式
+ * @param {String} class_id 类型id
  * @returns 
  */
-exports.addTemplate = async function ({ name, creator_id, json, class_id }) {
-
+exports.addTemplate = async function ({ name, creator_id, FcDesignerRuleJson, FcDesignerOptionsJson, class_id }) {
     fmt.required(name, "string", 1, 64);
     fmt.required(creator_id, "string", 1, 64);
-    fmt.required(json, "string", 1);
+    fmt.required(FcDesignerRuleJson, "string", 1);
+    fmt.required(FcDesignerOptionsJson, "string", 1);
     fmt.required(class_id, "string", 1);
     const id = idCreate.get();
-    const createTime = new Date();
+    const createTime = formatDate(new Date());
 
+    // 添加表单模板
+    await data.addTemplate({ id, name, creator_id, createTime, FcDesignerRuleJson, FcDesignerOptionsJson, class_id });
 
-    await data.addTemplate({ id, name, creator_id, createTime, json, class_id });
-    return true;
+    // 设置表单模板下的属性
+    await addProperty(JSON.parse(FcDesignerRuleJson), id);
+
+    return id;
 };
 
-exports.updateTemplateById = async function({ id, name, creator_id, json }) {
-
+exports.getTemplateById = async function({id}) {
     fmt.required(id, "string", 1, 64);
-    fmt.required(name, "string", 1, 64);
-    fmt.required(creator_id, "string", 1, 64);
-    fmt.required(json, "string", 1);
 
-    //TODO 当修改表单模板时，直接删除所有的属性 再重新添加
-    await data.setTemplateById({ id, name, creator_id, json });
-
-    return true;
+    return await data.getTemplateById({id});
 }
 
-exports.selectTemplateById = async function({id}) {
-    fmt.required(id, "string", 1, 64);
+exports.setTemplateById = async function({
+    id,
+    name,
+    FcDesignerRuleJson,
+    FcDesignerOptionsJson,
+    class_id
+}) {
+    fmt.required(id, "string", 1, 255);
+    fmt.required(name, "string", 1, 255);
+    fmt.required(FcDesignerRuleJson, "string", 1);
+    fmt.required(FcDesignerOptionsJson, "string", 1);
+    fmt.required(class_id, "string", 1);
 
-    return await data.selectTemplateById({id});
+    // 删除原有表单下的属性表
+    await data.delPropertyByTemplateId({ id });
+
+    // 在添加设置的表单模板下的属性
+    await addProperty(JSON.parse(FcDesignerRuleJson), id);
+
+    // 设置表单模板
+    await data.setTemplateById({ id, name, FcDesignerRuleJson, FcDesignerOptionsJson, class_id });
+
+    return true;
 }
 
 exports.delTemplateById = async function({id}) {
     fmt.required(id, "string", 1, 64);
 
-    await data.delTemplateById({id});
+    // 删除表单模板
+    await data.delTemplateById({ id });
+
+    // 删除表单模板下的属性
+    await data.delPropertyByTemplateId({ id });
 
     return true;
 }
 
 /**
  * 同时插入多条属性
- * [{ id, name, title, type, template_id },....]
- * @param {Array} propertyList 
+ * [{ id, title },....]
+ * @param {Array} propertyList 表单属性列表
+ * @param {String} template_id 表单模板id
  */
- exports.addProperty = async function(propertyList) {
+async function addProperty(propertyList, template_id) {
+    console.log(propertyList);
     // 一个表单模板的属性列表不能为空
     fmt.required(propertyList, "array", 1);
-    
-    let propertyListText = propertyList.map((item, index) => {
-
-        // 去掉在遍历过程中sql多了个逗号 
-        if(index === 0) {
-            return `(property_id = "${item.id}", property_name = "${item.name}", property_title = "${item.title}", property_type = "${item.type}", template_id="${item.template_id}")`
+    let propertyListTextArray = [];
+    propertyList.map((item) => {
+        if(item.field){
+            propertyListTextArray.push(`("${item.field}", "${item.title}", "${template_id}")`);
         }
-        return `,(property_id = "${item.id}", property_name = "${item.name}", property_title = "${item.title}", property_type = "${item.type}", template_id="${item.template_id}")`
     })
 
-    await data.addProperty(propertyListText);
+    await data.addProperty(propertyListTextArray.join(','));
 
     return true;
 }
 
 // 根据TemplateId删除其下的所有属性
-exports.delPropertyByTemplateId = async function({id}){
+exports.delPropertyByTemplateId = async function({ id }){
     fmt.required(id, "string", 1, 64);
 
     await data.delPropertyByTemplateId({id});
@@ -95,6 +116,49 @@ exports.delPropertyByTemplateId = async function({id}){
     return true;
 }
 
+/**
+ * 添加表单实例对象
+ * @param {*} param0 
+ * @returns 
+ */
+exports.addObject = async function({ fromTemplateid }) {
+    fmt.required(fromTemplateid, "string", 1, 64);
+
+    const id = idCreate.get();
+    await data.addObject({id, fromTemplateid, ctime: formatDate(new Date()), mtime: formatDate(new Date())});
+    return id;
+}
+
+/**
+ * 为表单实例对象添加值
+ * @param {String} objectId 对象id
+ * @param {Object} formData 属性值对象列表
+ * @returns 
+ */
+exports.addObjectValues = async function({ objectId, formData }) {
+    fmt.required(objectId, "string", 1, 64);
+    fmt.required(formData, "object", 1);
+
+    for(let key in formData) {
+        const id =idCreate.get();
+        await data.addObjectValue({ id, value: formData[key], objectId, propertyId: key })
+    }
+    return true;
+}
+
+
+ exports.getObjectValuesById = async function({ objectId }) {
+    fmt.required(objectId, "string", 1, 64);
+
+    const ObjectValues = data.getObjectValuesById({ objectId });
+    return ObjectValues;
+}
+
+
+
+
+
+// 添加表单分类
 exports.addClass = async function({name, title}) {
     fmt.required(name, "string", 1, 64);
     fmt.required(title, "string", 1, 64);
@@ -104,47 +168,12 @@ exports.addClass = async function({name, title}) {
 
     return true;
 }
-
-exports.addObject = async function({class_id, name}) {
-    fmt.required(class_id, "string", 1, 64);
-    fmt.required(name, "string", 1, 64);
-    const id = idCreate.get();
-    const createTime = new Date();
-
-    await data.addObject({id, class_id, name, createTime});
-
-    return true;
-}
-
 exports.updateObjectById = async function({id, class_id, name}){
     fmt.required(id, "string", 1, 64);
     fmt.required(class_id, "string", 1, 64);
     fmt.required(name, "string", 1, 64);
 
     await data.updateObjectById({id, class_id, name});
-
-    return true;
-}
-
-/**
- * 往同一对象中同时插入多条关于值得数据
- * [{ property_id, value },....], object_id
- * @param {Array} propertyList 
- */
-exports.addObjectValue = async function(objectValue, object_id) {
-    fmt.required(object_id, "string", 1, 64);
-    fmt.required(objectValue, "array", 1);
-
-    let objectValueText = objectValue.map((item, index) => {
-        const id = idCreate.get();
-        if(index === 0){
-            return `(${id}, ${item.property_id}, ${item.value}, ${object_id})`;
-        }
-
-        return `,(${id}, ${item.property_id}, ${item.value}, ${object_id})`;
-    })
-
-    await data.addObjectValue(objectValueText);
 
     return true;
 }
@@ -164,4 +193,24 @@ exports.selectObjectValueByObjectId = async function({object_id}) {
     fmt.required(object_id, "string", 1, 64);
 
     return await data.selectObjectValueByObjectId({object_id});
+}
+
+/**
+ * 对日期格式进行处理 xxxx-xx-xx xx:xx
+ * @param {Date} date 日期
+ * @returns {string} 出理后的日期
+ */
+function formatDate(date) {
+    var y = date.getFullYear();
+    var m = date.getMonth() + 1;
+    m = m < 10 ? "0" + m : m;
+    var d = date.getDate();
+    d = d < 10 ? "0" + d : d;
+    var h = date.getHours();
+    h = h < 10 ? "0" + h : h;
+    var minute = date.getMinutes();
+    minute = minute < 10 ? "0" + minute : minute;
+    var second = date.getSeconds();
+    second = second < 10 ? "0" + second : second;
+    return y + "-" + m + "-" + d + " " + h + ":" + minute + ":" + second;
 }

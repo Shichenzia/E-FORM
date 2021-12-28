@@ -15,9 +15,14 @@ exports.init = async function (args) {
     router.get('/', http.handler(logic.helloWorld));
 
     router.post('/add_template', http.handler(logic.addTemplate));
-    router.post('/update_template_by_id', http.handler(logic.updateTemplateById));
-    router.post('/select_template_by_id', http.handler(logic.selectTemplateById));
+    router.post('/get_template_by_id', http.handler(logic.getTemplateById));
+    router.post('/set_template_by_id', http.handler(logic.setTemplateById));
     router.post('/del_template_by_id', http.handler(logic.delTemplateById));
+
+    router.post('/add_object', http.handler(logic.addObject));
+    router.post('/add_object_values', http.handler(logic.addObjectValues));
+    router.post('/get_object_values_by_id', http.handler(logic.getObjectValuesById));
+
 
   });
 

@@ -9,45 +9,46 @@ exports.init = async function (args) {
     await mysql.init(args.mysql);
 };
 
-exports.addTemplate = async function ({ id, name, creator_id, createTime, json , class_id}) {
+exports.addTemplate = async function ({ id, name, creator_id, createTime, FcDesignerRuleJson, FcDesignerOptionsJson, class_id }) {
     const sql = `
         INSERT INTO
-            form_template
+            t_template
         VALUES(
             "${id}",
             "${name}",
             "${creator_id}",
             "${createTime}",
-            '${json}',
+            '${FcDesignerRuleJson}',
+            '${FcDesignerOptionsJson}',
             "${class_id}"
         )
     `;
     return await mysql.query(sql);
 }
 
-exports.setTemplateById = async function ({ id, name, creator_id, json, class_id }) {
-    const sql = `
-        UPDATE
-            form_template
-        SET
-            template_name = "${name}",
-            creator_id = "${creator_id}",
-            template_json = "${json}",
-            class_id = "${class_id}""
-        WHERE
-            template_id = "${id}"
-    `;
-    return await mysql.query(sql);
-}
-
-exports.selectTemplateById = async function ({ id }) {
+exports.getTemplateById = async function ({ id }) {
     const sql = `
         SELECT
             *
         FROM
-            form_template
+            t_template
         WHERE
-            template_id = "${id}"
+            c_id = "${id}"
+    `;
+    return await mysql.query(sql);
+}
+
+exports.setTemplateById = async function ({ id, name, FcDesignerRuleJson, FcDesignerOptionsJson, class_id }) {
+    const sql = `
+        UPDATE
+            t_template
+        SET
+            c_name = "${name}",
+            FcDesignerRuleJson = '${FcDesignerRuleJson}',
+            FcDesignerOptionsJson = '${FcDesignerOptionsJson}',
+            c_class_id = "${class_id}"
+        WHERE
+            c_id = "${id}"
     `;
     return await mysql.query(sql);
 }
@@ -55,18 +56,17 @@ exports.selectTemplateById = async function ({ id }) {
 exports.delTemplateById = async function ({ id }) {
     const sql = `
         DELETE FROM
-            form_template
+            t_template
         WHERE
-            template_id = "${id}"
+            c_template_id = "${id}"
     `;
     return await mysql.query(sql);
 }
 
-
 exports.addProperty = async function(propertyListTetx) {
     const sql =`
         INSERT INTO
-            form_property
+            t_property
         VALUES
             ${propertyListTetx}
     `;
@@ -78,32 +78,67 @@ exports.addProperty = async function(propertyListTetx) {
 exports.delPropertyByTemplateId = async function({id}){
     const sql = `
         DELETE FROM
-            form_property
+            t_property
         WHERE
-            template_id = "${id}"
+            c_template_id = "${id}"
     `;
     return await mysql.query(sql);
 }
 
+// 添加表单实例对象
+exports.addObject = async function({id, fromTemplateid, ctime, mtime, name = ""}){
+    const sql = `
+        INSERT INTO
+            t_object
+        VALUES
+            ("${id}", "${fromTemplateid}", "${name}", "${ctime}", "${mtime}")
+    `;
+    return await mysql.query(sql);
+}
+
+// 为表单实例对象添加值
+exports.addObjectValue = async function({ id, value, objectId, propertyId }) {
+    const sql =`
+        INSERT INTO
+            t_object_value
+        VALUES
+            ("${id}", "${propertyId}", "${value}", "${objectId}")
+    `;
+
+    return await mysql.query(sql);
+}
+
+exports.getObjectValuesById = async function ({ objectId }) {
+    const sql = `
+        SELECT
+            *
+        FROM
+            t_object_value o, t_property p
+        WHERE
+            o.c_object_id = "${objectId}" and o.c_property_id = p.c_id
+    `;
+    return await mysql.query(sql);
+}
+
+
+
+
+
+
+
+
+
 exports.addClass = async function({id, title, name}) {
     const sql = `
         INSERT INTO
-            form_class
+            t_class
         VALUES
             ("${id}", "${title}", "${name}")
     `;
     return await mysql.query(sql);
 }
 
-exports.addObject = async function({id, class_id, name, createTime}){
-    const sql = `
-        INSERT INTO
-            from_object
-        VALUES
-            ("${id}", "${class_id}", "${name}", "${createTime}")
-    `;
-    return await mysql.query(sql);
-}
+
 
 exports.updateObjectById = async function({id, class_id, name}) {
     const sql = `
@@ -118,21 +153,10 @@ exports.updateObjectById = async function({id, class_id, name}) {
     return await mysql.query(sql);
 }
 
-exports.addObjectValue = async function(objectValueText) {
-    const sql =`
-        INSERT INTO
-            form_object_value
-        VALUES
-            ${objectValueText}
-    `;
-
-    return await mysql.query(sql);
-}
-
 exports.updataObjectValue = async function({id, value}) {
     const sql = `
         UPDATE
-            form_object_value
+            t_object_value
         SET
             value = "${value}",
         WHERE
@@ -146,9 +170,11 @@ exports.selectObjectValueByObjectId = async function ({ object_id }) {
         SELECT
             *
         FROM
-            form_object_value
+            t_object_value
         WHERE
             object_id = "${object_id}"
     `;
     return await mysql.query(sql);
 }
+
+

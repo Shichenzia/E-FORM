@@ -1,11 +1,11 @@
 {
   "data": {
     "mysql": {
-      "host": "127.0.0.1",
+      "host": "121.196.206.242",
       "port": 3306,
-      "user": "root",
-      "password": "123456",
-      "database": "e-form"
+      "user": "e_form",
+      "password": "5SPEdF56tKX6LXYf",
+      "database": "e_form"
     }
   },
   "logic": {
@@ -14,7 +14,7 @@
   "serv": {
     "name": "E-FORM",
     "host": "127.0.0.1",
-    "port": 8080,
+    "port": 8086,
     "cors": true,
     "log": true,
     "proxy": true
