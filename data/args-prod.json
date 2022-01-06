@@ -1,18 +1,18 @@
 {
   "data": {
     "mysql": {
-      "host": "127.0.0.1",
+      "host": "121.196.206.242",
       "port": 3306,
-      "user": "root",
-      "password": "root",
-      "database": "test"
+      "user": "e_form",
+      "password": "5SPEdF56tKX6LXYf",
+      "database": "e_form"
     }
   },
   "logic": {
     
   },
   "serv": {
-    "name": "nodex-0",
+    "name": "E-FORM",
     "host": "0.0.0.0",
     "port": 80,
     "cors": true,
