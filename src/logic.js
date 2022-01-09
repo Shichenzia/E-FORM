@@ -2,13 +2,23 @@
 
 const { libs, runtime } = nodex;
 const { data } = runtime;
-const { fmt, flakes } = libs;
+const { fmt, flakes, log } = libs;
 
 const idCreate = flakes.create();
 
 exports.init = async function (args) {
   console.log("logic init.");
   console.log("logic init args:", args);
+  log.init({
+    scope: "form",
+    server: {
+      url: "https://leansocket.tech/api/easegram-logs/add_logs",
+      appid: "000ecbd56ee80000000a",
+      secret: "89aa008b8bed43f9d3be840e477f3d85",
+      interval: 6000
+    },
+    handler: ()=>{}
+  });
 };
 
 exports.helloWorld = async function () {
