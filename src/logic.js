@@ -2,7 +2,7 @@
 
 const { libs, runtime } = nodex;
 const { data } = runtime;
-const { fmt, flakes, log } = libs;
+const { fmt, flakes, log, error } = libs;
 
 const idCreate = flakes.create();
 
@@ -22,6 +22,12 @@ exports.init = async function (args) {
 };
 
 exports.helloWorld = async function () {
+    for (let index = 0; index < 10; index++) {
+        console.log('this is log')
+        console.error('this is error')
+        console.info('this is info')
+        console.warn('this is warn')
+    }
   return "hello world!";
 };
 
@@ -54,6 +60,11 @@ exports.addTemplate = async function ({ name, creator_id, FcDesignerRuleJson, Fc
 
 exports.getTemplateById = async function({id}) {
     fmt.required(id, "string", 1, 64);
+
+    const ret = await data.getTemplateById({id});
+    if(!ret.length){
+        throw error("ERROR", "Invalid Volume ID");
+    }
 
     return await data.getTemplateById({id});
 }
